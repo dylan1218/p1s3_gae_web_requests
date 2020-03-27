@@ -15,7 +15,6 @@ if len(integer_types) == 1:
     long = integer_types[0]
 import flask
 from google.cloud import ndb
-import stripe
 
 
 sys.path.insert(0, 'includes')
