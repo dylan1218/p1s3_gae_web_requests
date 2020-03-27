@@ -1,15 +1,5 @@
-from __future__ import unicode_literals
-import re
 
-try:
-    from google.appengine.ext import ndb
-except:
-    pass
-from types import InstanceType
-
-G_user_uid_with_prefix_re = re.compile(r'^use?r_\d+$')
-G_object_attribute_uid_with_prefix_re = re.compile(r'^obj_attr_\d+$')
-
+from types import FunctionType
  
 class DataValidation():
 
@@ -36,7 +26,7 @@ class DataValidation():
                 return_msg += 'list entry %d has an invalid SqlColumn. Error:%s' % (index1,call_result['return_msg'])
                 continue
             
-            if type(value[1]) not in (int,unicode,long,float,bool):
+            if type(value[1]) not in (int,str,float,bool):
                 bad_input_flag =True
                 return_msg += 'list entry %d value entry is not the right type, its a %s ' % (index1,type(value[1]))
                 continue
@@ -48,8 +38,8 @@ class DataValidation():
 
     def __SqlOperatorRightValue(self,value):
         return_msg =  'DataValidation:__Operator_right_value '
-        if type(value) not in (int,unicode,long,float,InstanceType):
-            return_msg += 'value is not an integer, unicode or SqlColumn its a %s' % type(value)
+        if type(value) not in (int,str,float):
+            return_msg += 'value is not an integer, str or SqlColumn its a %s' % type(value)
             return {'success': False,'return_msg': return_msg}
         
         
@@ -59,9 +49,9 @@ class DataValidation():
                 return_msg += call_result['return_msg']
                 return {'success': False,'return_msg': return_msg}
         
-        if type(value) == unicode:
+        if type(value) == str:
             if len(value) < 1:
-                return_msg += 'value is a unicode less than 1 character long.'
+                return_msg += 'value is a str less than 1 character long.'
                 return {'success': False,'return_msg': return_msg}
         
         return {'success': True,'return_msg': return_msg}    
@@ -70,8 +60,8 @@ class DataValidation():
     def __SqlOperatorLeftValue(self,value):
         return_msg =  'DataValidation:__Operator_left_value '
         call_result = {}
-        if type(value) not in (unicode,InstanceType):
-            return_msg += 'value is not a unicode or SqlColumn its a %s' % type(value)
+        if type(value) not in (str):
+            return_msg += 'value is not a str or SqlColumn its a %s' % type(value)
             return {'success': False,'return_msg': return_msg}
         
         if type(value) == "SqlColumn":
@@ -80,9 +70,9 @@ class DataValidation():
                 return_msg += call_result['return_msg']
                 return {'success': False,'return_msg': return_msg}
         
-        if type(value) == unicode:
+        if type(value) == str:
             if len(value) < 1:
-                return_msg += 'value is a unicode less than 1 character long.'
+                return_msg += 'value is a str less than 1 character long.'
                 return {'success': False,'return_msg': return_msg}
            
         return {'success': True,'return_msg': return_msg}    
@@ -90,17 +80,17 @@ class DataValidation():
     def __IntList(self,values):
         return_msg = 'DataValidation:__IntList '
         for index1,value in enumerate(values):
-            if type(value) not in (int,long,float):
+            if type(value) not in (int,float):
                 return_msg += 'index %d of list is not an integer its a %s' % (index1,type(value))
                 return {'success': False,'return_msg': return_msg}
         
         return {'success': True,'return_msg': return_msg}
         
-    def __UnicodeList(self,values):
-        return_msg = 'DataValidation:__UnicodeList '
+    def __strList(self,values):
+        return_msg = 'DataValidation:__strList '
         for index1,value in enumerate(values):
-            if type(value) != unicode:
-                return_msg += 'index %d of list is not a unicode its a %s' % (index1,type(value))
+            if type(value) != str:
+                return_msg += 'index %d of list is not a str its a %s' % (index1,type(value))
                 return {'success': False,'return_msg': return_msg}        
         return {'success': True,'return_msg': return_msg}
    
@@ -198,21 +188,35 @@ class DataValidation():
     
     
     def __0or1(self,value):
-        return self.__xOrY(0, 1, value)
-
-
-    def __greater0(self,value):
-        return_msg = 'DataValidation:__greater0 '
-        if type(value) in (unicode,str):
+        return_msg = 'DataValidation:__0or1 '
+        if type(value) in (str,str):
             try:
                 test_value = int(value)
             except Exception as e:
-                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (unicode(e),value)
+                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
                 return {'success': False,'return_msg': return_msg}
         else:
             test_value = value
         
-        if test_value <= 0:
+        if test_value != 0 and test_value != 1:
+            return_msg += "value should be 0 or 1 its %d" % test_value
+            return {'success': False,'return_msg': return_msg} 
+        
+        return {'success': True,'return_msg': return_msg}
+    
+    
+    def __greater0(self,value):
+        return_msg = 'DataValidation:__greater0 '
+        if type(value) in (str,str):
+            try:
+                test_value = int(value)
+            except Exception as e:
+                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
+                return {'success': False,'return_msg': return_msg}
+        else:
+            test_value = value
+        
+        if test_value < 0:
             return_msg += "value should be greater than 0. its %d" % test_value
             return {'success': False,'return_msg': return_msg} 
         
@@ -221,16 +225,16 @@ class DataValidation():
     
     def __bigInt(self,value):
         return_msg = 'DataValidation:__bigInt '
-        if type(value) in (unicode,str):
+        if type(value) in (str,str):
             try:
-                test_value = long(value)
+                test_value = int(value)
             except Exception as e:
-                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (unicode(e),value)
+                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
                 return {'success': False,'return_msg': return_msg}
         else:
             test_value = value
         if test_value < 0:
-            return_msg += "value should be greater than -1. its %d" % test_value
+            return_msg += "value should be greater than 0. its %d" % test_value
             return {'success': False,'return_msg': return_msg}
         
         if test_value > 18446744073709551615:
@@ -298,25 +302,18 @@ class DataValidation():
             return_msg += "value should be 102399 or less in length and its %d long" % len(value)
             return {'success': False,'return_msg': return_msg} 
         
-        return {'success': True,'return_msg': return_msg }
-          
-          
-    def __lenLess241(self,value):
-        return_msg = 'DataValidation:__lenLess241 '
-        if len(value) > 240:
-            return_msg += "value should be 240 or less in length and its %d long" % len(value)
-            return {'success': False,'return_msg': return_msg} 
-        
         return {'success': True,'return_msg': return_msg}
+    
+    
     
     
     def __attributeType(self,value):
         return_msg = 'DataValidation:__attributeType '
-        if type(value) in (unicode,str):
+        if type(value) in (str,str):
             try:
                 test_value = int(value)
             except Exception as e:
-                return_msg += "attribute type should be a text number but could not be converted to a number.exception:%s value is: %s" % (unicode(e),value)
+                return_msg += "attribute type should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
                 return {'success': False,'return_msg': return_msg}
         else:
             test_value = value
@@ -338,11 +335,11 @@ class DataValidation():
    
     def __greater19999(self,value):
         return_msg = 'DataValidation:__greater19999 '
-        if type(value) in (unicode,str):
+        if type(value) in (str,str):
             try:
                 test_value = int(value)
             except Exception as e:
-                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (unicode(e),value)
+                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
                 return {'success': False,'return_msg': return_msg}
         else:
             test_value = value
@@ -356,11 +353,11 @@ class DataValidation():
     
     def __less60001(self,value):
         return_msg = 'DataValidation:__less60001 '
-        if type(value) in (unicode,str):
+        if type(value) in (str,str):
             try:
                 test_value = int(value)
             except Exception as e:
-                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (unicode(e),value)
+                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
                 return {'success': False,'return_msg': return_msg}
         else:
             test_value = value
@@ -374,11 +371,11 @@ class DataValidation():
         
     def __less10001(self,value):
         return_msg = 'DataValidation:__less10001 '
-        if type(value) in (unicode,str):
+        if type(value) in (str,str):
             try:
                 test_value = int(value)
             except Exception as e:
-                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (unicode(e),value)
+                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
                 return {'success': False,'return_msg': return_msg}
         else:
             test_value = value
@@ -392,11 +389,11 @@ class DataValidation():
         
     def __less20000(self,value):
         return_msg = 'DataValidation:__less20000 '
-        if type(value) in (unicode,str):
+        if type(value) in (str,str):
             try:
                 test_value = int(value)
             except Exception as e:
-                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (unicode(e),value)
+                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
                 return {'success': False,'return_msg': return_msg}
         else:
             test_value = value
@@ -658,11 +655,11 @@ class DataValidation():
     
     def __accountType(self,value):
         return_msg = 'DataValidation:__accountType '
-        if type(value) in (unicode,str):
+        if type(value) in (str,str):
             try:
                 test_value = int(value)
             except Exception as e:
-                return_msg += "account type should be a text number but could not be converted to a number.exception:%s value is: %s" % (unicode(e),value)
+                return_msg += "account type should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
                 return {'success': False,'return_msg': return_msg}
         else:
             test_value = value
@@ -716,12 +713,12 @@ class DataValidation():
             if fail_flag == True:
                 continue
  
-            call_result = self.checkValues([[entry['name'],True,unicode,"len1"],
-                                            [entry['url'],True,unicode],
-                                            [entry['method'],True,unicode,"task_queue_method"],
+            call_result = self.checkValues([[entry['name'],True,str,"len1"],
+                                            [entry['url'],True,str],
+                                            [entry['method'],True,str,"task_queue_method"],
                                             [entry['RSA'],True,dict],
                                             [entry['PMA'],True,dict],
-                                            [entry['delay'],True,unicode,"less<65536"]
+                                            [entry['delay'],True,str,"less<65536"]
                                             ])
             debug_data.append(call_result)
             if call_result['success'] != True:
@@ -730,8 +727,8 @@ class DataValidation():
             
         ## check each task result assignment
             for key in entry['PMA']:
-                if type(entry['PMA'][key]) != unicode:
-                    return_msg += "msg: task queue entry %d task_param_assignments key value for key %s is not a unicode its a %s" %(index1,key,type(entry['PMA'][key]))
+                if type(entry['PMA'][key]) != str:
+                    return_msg += "msg: task queue entry %d task_param_assignments key value for key %s is not a str its a %s" %(index1,key,type(entry['PMA'][key]))
                     fail_flag = True
                 else:
                     if len(entry['PMA'][key]) < 1:
@@ -741,8 +738,8 @@ class DataValidation():
             
         ## check each task param assignment
             for key in entry['RSA']:
-                if type(entry['RSA'][key]) != unicode:
-                    return_msg += "msg: task queue entry %d task_result_assignments key value for key %s is not a unicode its a %s" %(index1,key,type(entry['RSA'][key]))
+                if type(entry['RSA'][key]) != str:
+                    return_msg += "msg: task queue entry %d task_result_assignments key value for key %s is not a str its a %s" %(index1,key,type(entry['RSA'][key]))
                     fail_flag = True
                 else:
                     if len(entry['RSA'][key]) < 1:
@@ -760,11 +757,11 @@ class DataValidation():
     
     def __organizationType(self,value):
         return_msg = 'DataValidation:__organizationType '
-        if type(value) in (unicode,str):
+        if type(value) in (str,str):
             try:
                 test_value = int(value)
             except Exception as e:
-                return_msg += "organization type should be a text number but could not be converted to a number.exception:%s value is: %s" % (unicode(e),value)
+                return_msg += "organization type should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
                 return {'success': False,'return_msg': return_msg}
         else:
             test_value = value
@@ -826,11 +823,11 @@ class DataValidation():
     
     def __objectType(self,value):
         return_msg = 'DataValidation:__objectType '
-        if type(value) in (unicode,str):
+        if type(value) in (str,str):
             try:
                 test_value = int(value)
             except Exception as e:
-                return_msg += "object type should be a text number but could not be converted to a number.exception:%s value is: %s" % (unicode(e),value)
+                return_msg += "object type should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
                 return {'success': False,'return_msg': return_msg}
         else:
             test_value = value
@@ -856,53 +853,34 @@ class DataValidation():
     
     
     
-    def __NdbModel(self,value):
-        return_msg = 'DataValidation:__NdbModel '
-        call_result = {}
-        if issubclass(value.__class__, ndb.Model) == False:
-            return_msg += 'this is not a Ndb.Model Class. its a %s' % value.__class__.__name__
-            return {'success': False,'return_msg': return_msg}
-        return {'success': True,'return_msg': return_msg}
 
-
-    def __NdbKey(self,value):
-        return_msg = 'DataValidation:__NdbKey '
-        call_result = {}
-        if issubclass(value.__class__, ndb.Key) == False:
-            return_msg += 'this is not a Ndb.Key Class. its a %s' % value.__class__.__name__
-            return {'success': False,'return_msg': return_msg}
-        return {'success': True,'return_msg': return_msg}
-
-    def __xOrY(self, x, y, value):
-        return_msg = 'DataValidation:__{}or{} '.format(x, y)
-        if type(value) in (unicode,str):
+    
+    def __2or3(self,value):
+        return_msg = 'DataValidation:__2or3 '
+        if type(value) in (str,str):
             try:
                 test_value = int(value)
             except Exception as e:
-                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (unicode(e),value)
+                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
                 return {'success': False,'return_msg': return_msg}
         else:
             test_value = value
-
-        if test_value != x and test_value != y:
-            return_msg += "value should be {} or {} its {}".format(x, y, test_value)
-            return {'success': False, 'return_msg': return_msg}
-
-        return {'success': True, 'return_msg': return_msg}
-
-    def __1or2(self, value):
-        return self.__xOrY(1, 2, value)
-
-    def __2or3(self,value):
-        return self.__xOrY(2, 3, value)
-
+        
+        if test_value != 2 and test_value != 3:
+            return_msg += "value should be 2 or 3 its %d" % test_value
+            return {'success': False,'return_msg': return_msg} 
+        
+        return {'success': True,'return_msg': return_msg}
+ 
+    
+      
     def __less65536(self,value):
         return_msg = 'DataValidation:__less65536 '
-        if type(value) in (unicode,str):
+        if type(value) in (str,str):
             try:
                 test_value = int(value)
             except Exception as e:
-                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (unicode(e),value)
+                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
                 return {'success': False,'return_msg': return_msg}
         else:
             test_value = value
@@ -913,28 +891,14 @@ class DataValidation():
         
         return {'success': True,'return_msg': return_msg}
      
-    def __1to12(self, value):
-        return_msg = 'DataValidation:__1to12 '
-        try:
-            test_value = int(value)
-        except Exception as e:
-            return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (
-                unicode(e), value)
-            return {'success': False, 'return_msg': return_msg}
-
-        if test_value < 1 or test_value > 12:
-            return_msg += "value should be between 1 and 12 inclusive. its %d" % test_value
-            return {'success': False, 'return_msg': return_msg}
-
-        return {'success': True, 'return_msg': return_msg}
-
+        
     def __objectAttributeSettableValueType(self,value):
         return_msg = 'DataValidation:__objectAttributeSettableValueType '
-        if type(value) in (unicode,str):
+        if type(value) in (str,str):
             try:
                 test_value = int(value)
             except Exception as e:
-                return_msg += "settable type should be a text number but could not be converted to a number.exception:%s value is: %s" % (unicode(e),value)
+                return_msg += "settable type should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
                 return {'success': False,'return_msg': return_msg}
         else:
             test_value = value
@@ -949,11 +913,11 @@ class DataValidation():
         
     def __datastoreUpdateType(self,value):
         return_msg = 'DataValidation:__datastoreUpdateType '
-        if type(value) in (unicode,str):
+        if type(value) in (str,str):
             try:
                 test_value = int(value)
             except Exception as e:
-                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (unicode(e),value)
+                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
                 return {'success': False,'return_msg': return_msg}
         else:
             test_value = value
@@ -999,113 +963,79 @@ class DataValidation():
             return {'success': False,'return_msg': return_msg} 
         
         return {'success': True,'return_msg': return_msg}
-   
     
-    def __organization_uid_with_prefix(self,value):
-        return_msg = 'DataValidation:__organization_uid_with_prefix '
-        call_result = {}
-        debug_data = []
-         
-        if value[:4] != "org_":
-            return_msg += "prefix is not org_. first 100 characters of value are:%s" % value[:100]
-            return {'success': False,'return_msg': return_msg,'debug_data':debug_data}
+    def __is_function(self,value):
+        return_msg = 'DataValidation:__is_function '
+        if type(value) != FunctionType:
+            return_msg += 'this variables type is not a function its a ' + str(type(value))
+            return {'success': False,'return_msg': return_msg} 
         
-        for character in value[4:]:
-            if character not in"0123456789":
-                return_msg += "org uid should have only numbers after org_ prefix. first 100 characters of value are:%s" % (value[:100])
-                return {'success': False,'return_msg': return_msg,'debug_data':debug_data}
+        if callable(value) != True:
+            return_msg += "callable shows this is not a function"
+            return {'success': False,'return_msg': return_msg} 
         
+        return {'success': True,'return_msg': return_msg}
+    
+    def __2to4(self,value):
+        return_msg = 'DataValidation:__2to4 '
+        if type(value) in (str,str):
+            try:
+                test_value = int(value)
+            except Exception as e:
+                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
+                return {'success': False,'return_msg': return_msg}
+        else:
+            test_value = value
         
+        if test_value  <2 or test_value > 4:
+            return_msg += "value should be between 2 and 4 its %d" % test_value
+            return {'success': False,'return_msg': return_msg} 
         
-        return {'success': True,'return_msg': return_msg,'debug_data':debug_data}
-
-    def __userUidWithPrefix(self, value):
-        return_msg = 'DataValidation:__userUidWithPrefix '
-        call_result = {}
-        debug_data = []
-
-        if not G_user_uid_with_prefix_re.match(value):
-            return_msg += "UID is not using format ^use?r_\\d+. first 100 characters of value are:%s" % value[:100]
-            return {'success': False, 'return_msg': return_msg, 'debug_data': debug_data}
-
-        return {'success': True, 'return_msg': return_msg, 'debug_data': debug_data}
-
-    def __object_uid_with_prefix(self, value):
-        return_msg = 'DataValidation:__object_uid_with_prefix '
-        call_result = {}
-        debug_data = []
-
-        if value[:4] != "obj_":
-            return_msg += "prefix is not obj_. first 100 characters of value are:%s" % value[:100]
-            return {'success': False, 'return_msg': return_msg, 'debug_data': debug_data}
-
-        for character in value[4:]:
-            if character not in "0123456789":
-                return_msg += "object uid should have only numbers after obj_ prefix. first 100 characters of value are:%s" % (
-                value[:100])
-                return {'success': False, 'return_msg': return_msg, 'debug_data': debug_data}
-
-        return {'success': True, 'return_msg': return_msg, 'debug_data': debug_data}
-
-    def __objectAttributeUidWithPrefix(self, value):
-        return_msg = 'DataValidation:__objectAttributeUidWithPrefix '
-        call_result = {}
-        debug_data = []
-
-        if not G_object_attribute_uid_with_prefix_re.match(value):
-            return_msg += "UID is not using format ^obj_attr_\\d+. first 100 characters of value are:%s" % value[:100]
-            return {'success': False, 'return_msg': return_msg, 'debug_data': debug_data}
-
-        return {'success': True, 'return_msg': return_msg, 'debug_data': debug_data}
-
-    def __system_uid_with_prefix(self, value):
-        return_msg = 'DataValidation:__system_uid_with_prefix '
-        call_result = {}
-        debug_data = []
-
-        if value[:4] != "sys_":
-            return_msg += "prefix is not sys_. first 100 characters of value are:%s" % value[:100]
-            return {'success': False, 'return_msg': return_msg, 'debug_data': debug_data}
-
-        for character in value[4:]:
-            if character not in "0123456789":
-                return_msg += "system uid should have only numbers after sys_ prefix. first 100 characters of value are:%s" % (
-                value[:100])
-                return {'success': False, 'return_msg': return_msg, 'debug_data': debug_data}
-
-        return {'success': True, 'return_msg': return_msg, 'debug_data': debug_data}
-
-    def __listOfUidsNumbers(self, value_list):
-        return_msg = 'DataValidation:__listOfUidsNumbers '
-        debug_data = []
-        call_result = {}
-        for index1, value in enumerate(value_list):
-            if type(value) not in (long,int):
-                return_msg += "index %d is not a long/int type its a %s" % (index1, type(list))
-                return {'success': False, 'return_msg': return_msg}
-
-        fail_flag = False
-        for index1, value in enumerate(value_list):
-            call_result = self.__bigInt(value)
-            debug_data.append(call_result)
-            if call_result['success'] != True:
-                return_msg += 'index: + ' + unicode(index1) + ' failed bigint check. '
-                fail_flag = True
-
-        if fail_flag == True:
-            return {'success': False, 'return_msg': return_msg, 'debug_data': debug_data}
-
-        return {'success': True, 'return_msg': return_msg}
-
-
-    def checkValues(self,values):
+        return {'success': True,'return_msg': return_msg}
+    
+    
+    def __millitary_time(self,value):
+        return_msg = 'DataValidation:__millitary_time '
+        if type(value) in (str,str):
+            try:
+                test_value = int(value)
+            except Exception as e:
+                return_msg += "value should be a text number but could not be converted to a number.exception:%s value is: %s" % (str(e),value)
+                return {'success': False,'return_msg': return_msg}
+        else:
+            test_value = value
+        
+        if test_value  <0  or test_value > 2359:
+            return_msg += "value should be between 0 and 2359 its %d" % test_value
+            return {'success': False,'return_msg': return_msg}
+        
+        return {'success': True,'return_msg': return_msg}
+    
+    
+    
+    def __baud_rate(self,value):
+        return_msg = 'DataValidation:__baud_rate '
+        
+        if type(value) != int:
+            return_msg += "value is not a int its a %s" % (str(type(value)))
+            return {'success': False,'return_msg': return_msg}
+        
+        if value not in (110, 300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 38400, 57600, 115200, 128000, 256000):
+            return_msg += "baud rate is not an industry standard rate"
+            return {'success': False,'return_msg': return_msg}
+        
+        return {'success': True,'return_msg': return_msg}
+    
+    
+    def checkValues(self,values_list):
         call_result = {}
         debug_data = []
         return_msg = 'DataValidation:checkValues '
         validation_messages = []
+        
         function_list = ("len1","len>1","sqlcolumn","sqlcolumlist",
                          "sqlqualifier","sqlqualifierlist","intlist",
-                         "unicodelist","operator_right_value","operator_left_value",
+                         "strlist","operator_right_value","operator_left_value",
                          "sqlinsertlist","mysql_db_handle","cursor",
                          "maxlen5000","0or1","greater0","bigint",
                          "len<151","len<1000","object_attribute_rule_operator",
@@ -1119,17 +1049,16 @@ class DataValidation():
                           "list_of_lists","task_queue_method","list_of_dicts",
                           "account_type","task_queue_list","organization_type",
                           "organization_processor_key2","firebase_instruction",
-                          "object_type","ndb_model","list_of_ndb_models",
-                          "1or2", "2or3","less<65536","1<=x<=12", "obj_atr_settable_value_type",
+                          "object_type","list_of_ndb_models",
+                          "2or3","less<65536","obj_atr_settable_value_type",
                           "less<20000","len<102400","datastore_update_type",
-                          "date_string_yyyy_mm_dd", "len512","organization_uid_with_prefix", "user_uid_with_prefix",
-                          'len<241', "ndb_key","object_uid_with_prefix", "object_attribute_uid_with_prefix",
-                          'system_uid_with_prefix','list_of_uid_numbers')
+                          "date_string_yyyy_mm_dd","len512","is_function",
+                          "len>0","2to4","baud_rate","millitary_time")
         
 
         function_refs = [self.__SequenceLength1, self.__SequenceLength1, self.__SqlColumn,self.__SqlColumnList,
                          self.__SqlQualifier,self.__SqlQualifierList,self.__IntList,
-                         self.__UnicodeList,self.__SqlOperatorRightValue,self.__SqlOperatorLeftValue,
+                         self.__strList,self.__SqlOperatorRightValue,self.__SqlOperatorLeftValue,
                          self.__SQL_InsertList,self.__mysql_db_handle,self.__cursor,
                          self.__maxlen5000,self.__0or1,self.__greater0,self.__bigInt,
                          self.__lenLessThan151,self.__lenLessThan1000,self.__objectAttributeRuleOperator,
@@ -1143,30 +1072,29 @@ class DataValidation():
                          self.__listOfLists,self.__taskQueueMethod,self.__listOfDicts,
                          self.__accountType,self.__taskQueueList,self.__organizationType,
                          self.__organizationProcessorKey2,self.__firebaseInstruction,
-                         self.__objectType,self.__NdbModel,self.__NdbModelList,
-                         self.__1or2, self.__2or3,self.__less65536,self.__1to12,self.__objectAttributeSettableValueType,
+                         self.__objectType,self.__NdbModelList,
+                         self.__2or3,self.__less65536,self.__objectAttributeSettableValueType,
                          self.__less20000,self.__lenLessThan102400,self.__datastoreUpdateType,
-                         self.__date_string_YYYY_MM_DD,self.__len512,self.__organization_uid_with_prefix,
-                         self.__userUidWithPrefix,
-                         self.__lenLess241, self.__NdbKey,
-                         self.__object_uid_with_prefix, self.__objectAttributeUidWithPrefix,
-                         self.__system_uid_with_prefix,self.__listOfUidsNumbers
+                         self.__date_string_YYYY_MM_DD,self.__len512,self.__is_function,
+                         self.__SequenceLength1,self.__2to4,self.__baud_rate,self.__millitary_time
                          ]
         
-        types_list = (int,float,str,unicode,long,list,dict,InstanceType,object,bool)
+        types_list = (int,float,str,str,list,dict,object,bool)
 #this needs to match the indexs of types_list
-        types_text = ("int","long","str","unicode","float","list","dict","instance","object")     
+        types_text = ("int","long","str","str","float","list","dict","instance","object")     
         value_fail_flag = False
     ## make sure the rules are correctly formatted
-        if type(values) != list:
-            return_msg += 'msg:values is not a list, its a %s' % type(values)
+        if type(values_list) != list:
+            return_msg += 'msg:values_list is not a list, its a %s' % type(values_list)
             return {'success': False,'return_msg': return_msg,'validation_messages':validation_messages, 'debug_data': debug_data }
         
-        if len(values) <  1:
-            return_msg += 'msg:values has no entries'
+        if len(values_list) <  1:
+            return_msg += 'msg:values_list has no entries'
             return {'success': False,'return_msg': return_msg, 'validation_messages':validation_messages, 'debug_data': debug_data }
         
-        for index1,value in enumerate(values):
+        value_type_processed_flags = False
+        for index1,value in enumerate(values_list):
+            value_type_processed_flags = False
             if type(value) != list:
                 value_fail_flag = True
                 validation_messages.append("%d sublist index is not a list its a %s" % (index1,type(value)))
@@ -1181,6 +1109,8 @@ class DataValidation():
                 validation_messages.append("%d sublist index should have the index 1 entry as a bool, its a %s" % (index1,type(value[1])))
                 continue
     ##</end> make sure the rules are correctly formatted
+    
+        ## handle the required flag
             #is it a required value
             if value[1] == True and value[0] == None:
                 value_fail_flag = True
@@ -1189,23 +1119,44 @@ class DataValidation():
             #if the value isn't required and set to none skip to the next value            
             if value[1] == False and value[0] == None:
                 continue
+        ##</end> handle the required flag
+            
+        ## make sure the type is correct
+    
             #should it be a number? we treat int,long and float as interchangable
-            if value[2] in (int,long,float):
-                if type(value[0]) not in (int,long,float):
+            if value_type_processed_flags == False and value[2] in (int,float):
+                value_type_processed_flags = True
+                if type(value[0]) not in (int,float):
                     value_fail_flag = True
                     validation_messages.append("value %d should be a number but its a %s." % (index1,type(value[0]) ))
                     continue
-            #check all other types                
-            if value[2] in (str,unicode,list,dict,object,InstanceType):
+            #check built in types
+            elif value_type_processed_flags == False and value[2] in (str,str,list,dict,object):
+                value_type_processed_flags = True
                 if type(value[0]) != value[2]:
                     value_fail_flag = True
-                    validation_messages.append("value %d should be type %s but its a %s." % (index1, types_text[types_list.index(value[2])],value[0].__class__.__name__))
+                    validation_messages.append("value %d should be type %s but its a %s." % (index1, types_text[types_list.index(value[2])],str(type(value[0]))))
                     continue
+            #check all other types                
+            elif value_type_processed_flags == False:
+                value_type_processed_flags = True
+                try:
+                    if issubclass(value[0].__class__,value[2]) == False:
+                        value_fail_flag = True
+                        validation_messages.append("value %d should be type %s but its a %s." % (index1,str(value[2]),value[0].__class__.__name__))
+                        continue
+                except Exception as e:
+                    value_fail_flag = True
+                    validation_messages.append("exception occurred processing type for value %d. Exception: %s" %  (index1,str(e)))
+                    continue
+        ##</end> make sure the type is correct
+        
+            
         ## check against all custom rules for this value
             for index2 in range(3,len(value)):
                 rule = value[index2]
-                if type(rule) not in (unicode,str):
-                    return_msg += 'msg:value %d rule %d is not a unicode or string, its a %s' % (index1,index2,type(rule))
+                if type(rule) not in (str,str):
+                    return_msg += 'msg:value %d rule %d is not a str or string, its a %s' % (index1,index2,type(rule))
                     return {'success': False,'return_msg': return_msg, 'validation_messages':validation_messages, 'debug_data': debug_data }
                 
                 if rule in function_list:
@@ -1229,7 +1180,8 @@ class DataValidation():
         return_msg = 'DataValidation:ruleCheck '
         validation_messages = []
         value_fail_flag = False
-
+        value_rule_pairs
+        
         call_result = self.checkValues([[value_rule_pairs,True,list,"len1","list_of_lists"]])
         debug_data.append(call_result)
         if call_result['success'] != True:
@@ -1268,3 +1220,7 @@ class DataValidation():
         return_msg = call_result['return_msg']
         validation_messages = call_result['validation_messages']
         return {'success': call_result['success'],'return_msg': return_msg,'validation_messages':validation_messages, 'debug_data': debug_data }
+            
+            
+    
+        

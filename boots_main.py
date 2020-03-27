@@ -17,11 +17,9 @@ import flask
 from google.cloud import ndb
 import stripe
 
-import memorystore
-from webapp_class_wrapper import wrap_webapp_class
 
 sys.path.insert(0, 'includes')
-
+from webapp_class_wrapper import wrap_webapp_class
 from datavalidation import DataValidation
 from GCP_return_codes import FunctionReturnCodes as RC
 from error_handling import CR as RDK
