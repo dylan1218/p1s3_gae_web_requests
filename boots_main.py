@@ -95,7 +95,7 @@ class CommonPostHandler(DataValidation):
 
 
 @app.route(Services.web_request.create_user.url, methods=["OPTIONS", "POST"])
-@wrap_webapp_class(Services.web_request.create_user)
+@wrap_webapp_class(Services.web_request.create_user.name)
 class CreateUser(CommonPostHandler):
     def process_request(self):
         task_id = 'P3-CreateUser:process_request'

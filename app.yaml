@@ -6,7 +6,3 @@ handlers:
 - url: /p1s3/.*
   script: auto
   secure: always
-
-
-vpc_access_connector:
-  name: "projects/dev-watchdog-user-interface/locations/us-central1/connectors/redis"
