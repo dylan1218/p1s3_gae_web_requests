@@ -12,11 +12,6 @@ sys.path.insert(0,'includes')
 from datavalidation import DataValidation
 from GCP_return_codes import FunctionReturnCodes as RC
 
-global G_DEV_FLAG
-G_DEV_FLAG = False
-if "dev-" in unicode(os.environ.get('GAE_APPLICATION')).lower():
-    G_DEV_FLAG = True
-
 #this has to be imported after sys.path.insert(0,'oauth_lib')
 
 
@@ -52,11 +47,7 @@ class OauthExternalVerify(DataValidation):
     
     
     ## do an external check and then compare results
-        firebase_key = ''
-        if G_DEV_FLAG is True:
-            firebase_key  = 'dev-watchdog-user-interface'
-        else:
-            firebase_key = 'watchdog-user-interface'
+        firebase_key = 'aqueous-choir-160420'
 
         try:
             token_info = google.oauth2.id_token.verify_firebase_token(client_token_id, authHttpRequest(),firebase_key)
