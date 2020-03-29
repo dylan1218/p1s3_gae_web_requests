@@ -202,15 +202,26 @@ class CreateNeed(CommonPostHandler):
         return_msg = task_id + ": "
         user_uid = "1"
 
+# ~ Post Key: p1s3t1_name
+# Type:String
+# Required: Yes
+# Description: this value will be used to populate DsP1Needs > need_name
+
+# ~ Post Key: p1s3t1_requirements
+# Type: String
+# Required: No
+# Description: this value will be used to populate DsP1Needs > requirements
         # input validation
         need_name = unicode(self.request.get(TaskArguments.s3t1_name, ""))
         requirements = unicode(self.request.get(TaskArguments.s3t1_requirements, "")) or None
 
+        #rulecheck for input validation
         call_result = self.ruleCheck([
-            [need_name, DsP1.needs._rule_need_name],
+            [need_name, DsP1.needs._rule_need_name], 
             [requirements, DsP1.needs._rule_requirements],
         ])
 
+        #adds ruleCheck call_result to debug_data 
         debug_data.append(call_result)
         if call_result['success'] != RC.success:
             return_msg += "input validation failed"
@@ -219,7 +230,7 @@ class CreateNeed(CommonPostHandler):
 
         ## create transaction to create user in datastore
         pma = {
-            TaskArguments.s1t1_name: need_name,
+            TaskArguments.s1t1_name: need_name, #s1t1 defined in UML description
         }
         if requirements:
             pma[TaskArguments.s1t1_requirements] = requirements
@@ -394,3 +405,86 @@ class CreateUser(CommonPostHandler):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+@app.route(Services.web_request.modify_user_information.url, methods=["OPTIONS", "POST"])
+@wrap_webapp_class(Services.web_request.modify_user_information.name)
+class CreateNeed(CommonPostHandler):
+    def process_request(self):
+        task_id = '' #no page server class name provided yet in UML
+        debug_data = []
+        return_msg = task_id + ": "
+        user_uid = "1"
+
+# ~ Post Key: p1s3t1_name
+# Type:String
+# Required: Yes
+# Description: this value will be used to populate DsP1Needs > need_name
+
+# ~ Post Key: p1s3t1_requirements
+# Type: String
+# Required: No
+# Description: this value will be used to populate DsP1Needs > requirements
+        # input validation
+        user_uid = unicode(self.request.get(TaskArguments.s3t4_user_uid, ""))
+        first_name = unicode(self.request.get(TaskArguments.s3t4_first_name, "")) or None
+        last_name = unicode(self.request.get(TaskArguments.s3t4_last_name, "")) or None
+        phone_number = unicode(self.request.get(TaskArguments.s3t4_phone_number, "")) or None #Optional but if used MUST BE UNIQUE, to consider where validation is performed
+        phone_texts = 
+        phone_2 = 
+        emergency_contacts = 
+        home_address = 
+        email_address = 
+        firebase_uid =
+        country_uid = 
+        region_uid =
+        area_uid = 
+        description = 
+        preferred_radius = 
+        account_flags = 
+        location_cord_lang = 
+        location_cord_lat = 
+        
+
+
+
+        #rulecheck for input validation
+        call_result = self.ruleCheck([
+            [need_name, DsP1.needs._rule_need_name], 
+            [requirements, DsP1.needs._rule_requirements],
+        ])
+
+        #adds ruleCheck call_result to debug_data 
+        debug_data.append(call_result)
+        if call_result['success'] != RC.success:
+            return_msg += "input validation failed"
+            return {'success': RC.input_validation_failed, 'return_msg': return_msg, 'debug_data': debug_data}
+        # </end> input validation
+
+        ## create transaction to create user in datastore
+        pma = {
+            TaskArguments.s1t1_name: need_name, #s1t1 defined in UML description
+        }
+        if requirements:
+            pma[TaskArguments.s1t1_requirements] = requirements
+
+        task_sequence = [{
+            'name': TaskNames.s1t1,
+            'PMA': pma,
+        }]
+
+        try:
+            task_sequence = unicode(json.JSONEncoder().encode(task_sequence))
+        except Exception as e:
+            return_msg += "JSON encoding of task_queue failed with exception:%s" % e
+            return {'success': False, 'return_msg': return_msg, 'debug_data': debug_data}
+
+        task_functions = CTF()
+        call_result = task_functions.createTransaction(GSB.project_id, user_uid, task_id,
+                                                       task_sequence)
+        debug_data.append(call_result)
+        if call_result['success'] != RC.success:
+            return_msg += 'failed to add task queue function'
+            return {'success': call_result['success'], 'debug_data': debug_data, 'return_msg': return_msg}
+        ##</end> create transaction to create user in datastore
+
+        return {'success': RC.success, 'return_msg': return_msg, 'debug_data': debug_data}
