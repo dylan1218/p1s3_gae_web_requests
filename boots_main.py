@@ -408,49 +408,63 @@ if __name__ == "__main__":
 
 @app.route(Services.web_request.modify_user_information.url, methods=["OPTIONS", "POST"])
 @wrap_webapp_class(Services.web_request.modify_user_information.name)
-class CreateNeed(CommonPostHandler):
+class ModifyUserInfo(CommonPostHandler):
     def process_request(self):
         task_id = '' #no page server class name provided yet in UML
         debug_data = []
         return_msg = task_id + ": "
         user_uid = "1"
 
-# ~ Post Key: p1s3t1_name
-# Type:String
-# Required: Yes
-# Description: this value will be used to populate DsP1Needs > need_name
-
-# ~ Post Key: p1s3t1_requirements
-# Type: String
-# Required: No
-# Description: this value will be used to populate DsP1Needs > requirements
         # input validation
         user_uid = unicode(self.request.get(TaskArguments.s3t4_user_uid, ""))
         first_name = unicode(self.request.get(TaskArguments.s3t4_first_name, "")) or None
         last_name = unicode(self.request.get(TaskArguments.s3t4_last_name, "")) or None
-        phone_number = unicode(self.request.get(TaskArguments.s3t4_phone_number, "")) or None #Optional but if used MUST BE UNIQUE, to consider where validation is performed
-        phone_texts = 
-        phone_2 = 
-        emergency_contacts = 
-        home_address = 
-        email_address = 
-        firebase_uid =
-        country_uid = 
-        region_uid =
-        area_uid = 
-        description = 
-        preferred_radius = 
-        account_flags = 
-        location_cord_lang = 
-        location_cord_lat = 
+        phone_1 = unicode(self.request.get(TaskArguments.s3t4_phone_number, "")) or None #Optional but if used MUST BE UNIQUE, to consider where validation is performed
+        phone_texts = unicode(self.request.get(TaskArguments.s3t4_phone_texts, "")) or None
+        phone_2 = unicode(self.request.get(TaskArguments.s3t4_phone_2, "")) or None # no Phone_2 in p1_datastores model yet, but in UML
+        emergency_contacts = unicode(self.request.get(TaskArguments.s3t4_emergency_contact, "")) or None #no emergency contacts in p1_datastores model yet, but in UML
+        home_address = unicode(self.request.get(TaskArguments.s3t4_home_address, "")) or None
+        email_address = unicode(self.request.get(TaskArguments.s3t4_email_address, "")) or None #no s3tf_email_dress member created yet, should these be created or be removed from here?
+        firebase_uid =unicode(self.request.get(TaskArguments.s3t4_firebase_uid, "")) or None
+        country_uid = unicode(self.request.get(TaskArguments.s3t4_country_uid, "")) or None #no country uid in p1_datastores model yet
+        region_uid =unicode(self.request.get(TaskArguments.s3t4_region_uid, "")) or None #no reguin uid in p1_datastores model yet
+        area_uid = unicode(self.request.get(TaskArguments.s3t4_area_uid, "")) or None
+        description = unicode(self.request.get(TaskArguments.s3t4_description, "")) or None
+        preferred_radius = unicode(self.request.get(TaskArguments.s3t4_preferred_radius, "")) or None
+        account_flags = unicode(self.request.get(TaskArguments.s3t4_account_flags, "")) or None
         
+        #UML notes that if EITHER of these fields have a value, then both are required
+        #p1_datastores model has a single location_cords field, not lang and lat should it change in here or in model?
+        if unicode(self.request.get(TaskArguments.s3t4_last_name, "")) or unicode(self.request.get(TaskArguments.s3t4_last_name, "")):
+            location_cord_lang = unicode(self.request.get(TaskArguments.s3t4_location_cord_long, ""))
+            location_cord_lat = unicode(self.request.get(TaskArguments.s3t4_location_cord_lat, ""))
+        else:
+            location_cord_lang = None     
+            location_cord_lat = None
+
 
 
 
         #rulecheck for input validation
         call_result = self.ruleCheck([
-            [need_name, DsP1.needs._rule_need_name], 
-            [requirements, DsP1.needs._rule_requirements],
+            [user_uid, DsP1.user_pointers._rule_need_name], #wasn't user if DsP1UserPointers was appropriate as there is several models with user_UID, assumed that there's is a relationship between the models based off of this one
+            [first_name, DsP1.users._rule_first_name],
+            [last_name, DsP1.users._rule_last_name],
+            [phone_1, DsP1.users._rule_phone_1],
+            [phone_texts, DsP1.users._rule_phone_texts],
+            [phone_2, DsP1.users._rule_phone_2],
+            [emergency_contacts, DsP1.users._rule_emergency_contacts],
+            [home_address, DsP1.users._rule_home_address],
+            [email_address, DsP1.users._rule_email_address],
+            [firebase_uid, DsP1.users._rule_requirements],
+            [country_uid, DsP1.users._rule_requirements],
+            [region_uid, DsP1.users._rule_requirements],
+            [area_uid, DsP1.users._rule_requirements],
+            [description, DsP1.users._rule_requirements],
+            [preferred_radius, DsP1.users._rule_requirements],
+            [account_flags, DsP1.users._rule_requirements],
+            [location_cord_lang, DsP1.users._rule_requirements],
+            [location_cord_lat, DsP1.users._rule_requirements],
         ])
 
         #adds ruleCheck call_result to debug_data 
