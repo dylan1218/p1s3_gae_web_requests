@@ -28,6 +28,7 @@ from p1_services import TaskArguments
 from p1_services import TaskNames
 from p1_datastores import Datastores as DsP1
 from task_queue_functions import CreateTransactionFunctions as CTF
+from datastore_functions import DatastoreFunctions as DSF
 
 
 class OauthVerify(object):
@@ -221,9 +222,7 @@ class CreateNeed(CommonPostHandler):
             TaskArguments.s1t1_name: need_name,
         }
         if requirements:
-            pma.update({
-                TaskArguments.s1t1_requirements: requirements,
-            })
+            pma[TaskArguments.s1t1_requirements] = requirements
 
         task_sequence = [{
             'name': TaskNames.s1t1,
@@ -239,6 +238,93 @@ class CreateNeed(CommonPostHandler):
         task_functions = CTF()
         call_result = task_functions.createTransaction(GSB.project_id, user_uid, task_id,
                                                        task_sequence)
+        debug_data.append(call_result)
+        if call_result['success'] != RC.success:
+            return_msg += 'failed to add task queue function'
+            return {'success': call_result['success'], 'debug_data': debug_data, 'return_msg': return_msg}
+        ##</end> create transaction to create user in datastore
+
+        return {'success': RC.success, 'return_msg': return_msg, 'debug_data': debug_data}
+
+
+@app.route(Services.web_request.assign_need_to_needer.url, methods=["OPTIONS", "POST"])
+@wrap_webapp_class(Services.web_request.assign_need_to_needer.name)
+class AssignNeedToNeeder(CommonPostHandler):
+    def process_request(self):
+        task_id = 'web-requests:AssignNeedToNeeder:process_request'
+        debug_data = []
+        return_msg = task_id + ": "
+        transaction_user_uid = "1"
+
+        # input validation
+        need_uid = unicode(self.request.get(TaskArguments.s3t2_need_uid, ""))
+        needer_uid = unicode(self.request.get(TaskArguments.s3t2_needer_uid, ""))
+        user_uid = unicode(self.request.get(TaskArguments.s3t2_user_uid, ""))
+        special_requests = unicode(self.request.get(TaskArguments.s3t2_special_requests, "")) or None
+
+        call_result = self.ruleCheck([
+            [need_uid, DsP1.needer_needs_joins._rule_need_uid],
+            [needer_uid, GSB.post_data_rules.required_name],
+            [user_uid, GSB.post_data_rules.required_name],
+            [special_requests, DsP1.needer_needs_joins._rule_special_requests],
+        ])
+
+        debug_data.append(call_result)
+        if call_result['success'] != RC.success:
+            return_msg += "input validation failed"
+            return {'success': RC.input_validation_failed, 'return_msg': return_msg, 'debug_data': debug_data}
+
+        try:
+            existings_keys = [
+                ndb.Key(DsP1.needer._get_kind(), long(needer_uid)),
+                ndb.Key(DsP1.needs._get_kind(), long(need_uid)),
+                ndb.Key(DsP1.users._get_kind(), long(user_uid)),
+            ]
+        except Exception as exc:
+            return_msg += str(exc)
+            return {
+                'success': RC.input_validation_failed, 'return_msg': return_msg, 'debug_data': debug_data,
+            }
+
+        for existing_key in existings_keys:
+            call_result = DSF.kget(existing_key)
+            debug_data.append(call_result)
+            if call_result['success'] != RC.success:
+                return_msg += "Datastore access failed"
+                return {
+                    'success': RC.datastore_failure, 'return_msg': return_msg, 'debug_data': debug_data,
+                }
+            if not call_result['get_result']:
+                return_msg += "{} not found".format(existing_key.kind())
+                return {
+                    'success': RC.input_validation_failed, 'return_msg': return_msg, 'debug_data': debug_data,
+                }
+        # </end> input validation
+
+        pma = {
+            TaskArguments.s2t4_need_uid: need_uid,
+            TaskArguments.s2t4_needer_uid: needer_uid,
+            TaskArguments.s2t4_user_uid: user_uid,
+        }
+        if special_requests:
+            pma[TaskArguments.s2t4_special_requests] = special_requests
+
+        ## create transaction to create user in datastore
+        task_sequence = [{
+            'name': TaskNames.s2t4,
+            'PMA': pma,
+        }]
+
+        try:
+            task_sequence = unicode(json.JSONEncoder().encode(task_sequence))
+        except Exception as e:
+            return_msg += "JSON encoding of task_queue failed with exception:%s" % e
+            return {'success': False, 'return_msg': return_msg, 'debug_data': debug_data}
+
+        task_functions = CTF()
+        call_result = task_functions.createTransaction(
+            GSB.project_id, transaction_user_uid, task_id, task_sequence
+        )
         debug_data.append(call_result)
         if call_result['success'] != RC.success:
             return_msg += 'failed to add task queue function'
@@ -279,9 +365,7 @@ class CreateUser(CommonPostHandler):
             TaskArguments.s1t4_last_name: last_name,
         }
         if phone:
-            pma.update({
-                TaskArguments.s1t4_phone_number: unicode(phone)
-            })
+            pma[TaskArguments.s1t4_phone_number] = phone
 
         ## create transaction to create user in datastore
         task_sequence = [{
